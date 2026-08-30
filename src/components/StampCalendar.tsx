@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { StampMark } from "./StampMark";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
@@ -7,11 +8,15 @@ export function StampCalendar({
   month,
   stampedDates,
   today,
+  prevHref,
+  nextHref,
 }: {
   year: number;
   month: number; // 1-12
   stampedDates: Set<string>;
   today: string; // "YYYY-MM-DD"
+  prevHref: string;
+  nextHref: string | null;
 }) {
   const pad = (n: number) => n.toString().padStart(2, "0");
 
@@ -27,9 +32,31 @@ export function StampCalendar({
 
   return (
     <div className="rounded-lg border border-paper-line bg-white/60 p-4 sm:p-6">
-      <p className="mb-4 text-center font-heading text-xl text-ink">
-        {year}年{month}月
-      </p>
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          href={prevHref}
+          aria-label="前の月"
+          className="rounded px-2 py-1 text-ink-soft transition-colors hover:bg-paper-line/60"
+        >
+          ＜
+        </Link>
+        <p className="font-heading text-xl text-ink">
+          {year}年{month}月
+        </p>
+        {nextHref ? (
+          <Link
+            href={nextHref}
+            aria-label="次の月"
+            className="rounded px-2 py-1 text-ink-soft transition-colors hover:bg-paper-line/60"
+          >
+            ＞
+          </Link>
+        ) : (
+          <span aria-hidden="true" className="px-2 py-1 text-paper-line">
+            ＞
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-ink-soft">
         {WEEKDAYS.map((weekday) => (
           <div key={weekday} className="py-1 font-medium">
