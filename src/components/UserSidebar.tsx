@@ -9,7 +9,11 @@ export async function UserSidebar() {
 
   return (
     <aside className="w-full shrink-0 border-b border-paper-line bg-[#efe4c9] p-4 sm:w-64 sm:border-b-0 sm:border-r sm:p-6">
-      <h2 className="font-heading text-2xl text-ink">参加者</h2>
+      <RegisterForm />
+
+      <h2 className="mt-6 border-t border-paper-line pt-4 font-heading text-2xl text-ink">
+        参加者
+      </h2>
       {users.length === 0 ? (
         <p className="mt-3 text-sm text-ink-soft">
           まだ誰も登録していません。
@@ -28,7 +32,6 @@ export async function UserSidebar() {
           ))}
         </ul>
       )}
-      <RegisterForm />
     </aside>
   );
 }
