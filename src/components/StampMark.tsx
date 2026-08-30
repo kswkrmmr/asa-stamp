@@ -1,4 +1,9 @@
-// らんてくんの朱肉スタンプ画像が用意できるまでの仮デザイン（CLAUDE.md参照）。
+import Image from "next/image";
+
+const SIZE_PX = { sm: 24, md: 40, lg: 56 } as const;
+
+// 仮のスタンプ画像。RUNTEQの許可が取れ次第、正式ならんてくんスタンプに差し替え予定（CLAUDE.md参照）。
+// 透過PNGを object-fit: contain で正方形の枠に収め、mix-blend-mode: multiply で紙になじませている。
 export function StampMark({
   size = "md",
   animate = false,
@@ -6,18 +11,20 @@ export function StampMark({
   size?: "sm" | "md" | "lg";
   animate?: boolean;
 }) {
-  const sizeClass = {
-    sm: "h-6 w-6 text-[10px]",
-    md: "h-10 w-10 text-lg",
-    lg: "h-14 w-14 text-2xl",
-  }[size];
+  const px = SIZE_PX[size];
 
   return (
     <span
-      className={`stamp-mark inline-flex shrink-0 items-center justify-center font-bold ${sizeClass} ${animate ? "stamp-pop" : ""}`}
+      className={`stamp-mark relative inline-block shrink-0 ${animate ? "stamp-pop" : ""}`}
+      style={{ width: px, height: px }}
     >
-      <span aria-hidden="true">参</span>
-      <span className="sr-only">スタンプ済み</span>
+      <Image
+        src="/stamp.png"
+        alt="スタンプ済み"
+        fill
+        sizes={`${px}px`}
+        style={{ objectFit: "contain" }}
+      />
     </span>
   );
 }

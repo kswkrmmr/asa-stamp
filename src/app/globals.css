@@ -25,15 +25,10 @@ body {
   color: var(--color-ink);
 }
 
-/* 朱肉スタンプ風の見た目。丸のゆがみ・不透明度でハンコらしさを出す。 */
+/* 朱肉スタンプ画像。白背景のPNGを乗算ブレンドで紙になじませ、少し傾けてハンコらしさを出す。 */
 .stamp-mark {
-  border-radius: 46% 54% 52% 48% / 48% 46% 54% 52%;
-  background: var(--color-stamp);
-  color: #fff5e6;
-  box-shadow: 0 0 0 2px rgba(183, 40, 46, 0.2);
   mix-blend-mode: multiply;
   transform: rotate(-6deg);
-  line-height: 1;
 }
 
 @keyframes stamp-pop {
