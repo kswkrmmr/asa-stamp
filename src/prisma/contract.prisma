@@ -1,0 +1,30 @@
+// asa-stamp data contract
+// ログイン・セッションは存在しない。User は名前つきのスタンプカードそのもの。
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt TimestamptzString @default(now())
+  stamps    Stamp[]
+}
+
+model Stamp {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  // JST基準の暦日。時刻・タイムゾーンを持たない純粋な日付として扱う。
+  stampedOn Date
+  createdAt TimestamptzString @default(now())
+
+  @@unique([userId, stampedOn])
+}
+
+// 常に1行のみ運用する、スタンプ可能時間帯の管理者設定。
+model AdminSetting {
+  id          Int    @id @default(autoincrement())
+  startHour   Int    @default(6)
+  startMinute Int    @default(0)
+  endHour     Int    @default(9)
+  endMinute   Int    @default(0)
+  updatedAt   temporal.updatedAtString()
+}
