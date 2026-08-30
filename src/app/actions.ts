@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/prisma/db";
+import {
+  getJstTodayString,
+  getStampWindow,
+  isWithinStampWindowNow,
+  formatStampWindow,
+} from "@/lib/stampWindow";
 
 export type RegisterState = {
   error: string | null;
@@ -43,4 +49,38 @@ function isUniqueViolation(err: unknown): boolean {
     "sqlState" in err &&
     (err as { sqlState?: unknown }).sqlState === "23505"
   );
+}
+
+export type PressStampState = {
+  status: "idle" | "success" | "error";
+  error: string | null;
+};
+
+export async function pressStamp(
+  userId: string,
+  _prevState: PressStampState,
+  _formData: FormData,
+): Promise<PressStampState> {
+  const window = await getStampWindow();
+  if (!isWithinStampWindowNow(window)) {
+    return {
+      status: "error",
+      error: `スタンプが押せるのは ${formatStampWindow(window)} の間だけです`,
+    };
+  }
+
+  try {
+    await db.orm.public.Stamp.create({
+      userId,
+      stampedOn: getJstTodayString(),
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return { status: "error", error: "今日のスタンプはもう押されています" };
+    }
+    throw err;
+  }
+
+  revalidatePath(`/u/${userId}`);
+  return { status: "success", error: null };
 }

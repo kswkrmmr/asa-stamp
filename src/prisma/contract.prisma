@@ -12,8 +12,11 @@ model Stamp {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  // JST基準の暦日。時刻・タイムゾーンを持たない純粋な日付として扱う。
-  stampedOn Date
+  // JST基準の暦日（"YYYY-MM-DD"の文字列）。時刻・タイムゾーンを持たない。
+  // 注: bare型 `Date`（Temporal.PlainDate）はこのNodeバージョンにグローバルTemporalが
+  // 無いため実行時エラーになる（@prisma/orm-target-postgresのコーデックがTemporal必須）。
+  // 文字列版のDateStringを使うことで回避している。
+  stampedOn DateString
   createdAt TimestamptzString @default(now())
 
   @@unique([userId, stampedOn])

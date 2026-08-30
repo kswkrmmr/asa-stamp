@@ -45,7 +45,7 @@ RUNTEQ内の朝活参加記録を、昔のラジオ体操カードのように�
 
 ## データモデル方針（実装時の出発点）
 - User: id, name (unique), createdAt
-- Stamp: id, userId (FK, onDelete: Cascade), stampedOn (`Date`型 = Temporal.PlainDate、JST基準の暦日。時刻・TZを持たない), createdAt / unique制約 (userId, stampedOn)
+- Stamp: id, userId (FK, onDelete: Cascade), stampedOn (`DateString`型。"YYYY-MM-DD"のJST基準の暦日文字列。時刻・TZを持たない), createdAt / unique制約 (userId, stampedOn)
 - AdminSetting (id固定・単一行運用): startHour/startMinute/endHour/endMinute（初期値 06:00–09:00）, updatedAt
 
 ## Prisma 8 (Prisma Next) に関する重要な注意
@@ -54,10 +54,11 @@ RUNTEQ内の朝活参加記録を、昔のラジオ体操カードのように�
 このセッションで確認・確定した実装上の注意点:
 - ファイル配置は canonical layout に合わせ `prisma.config.ts`（リポジトリ直下）+ `src/prisma/contract.prisma` + `src/prisma/db.ts` + `migrations/app/`。`prisma orm init` はデフォルトだとルート直下`prisma/`に生成してしまう既知の不具合があるため、`--schema-path src/prisma/contract.prisma` を使うか、後で移動すること。
 - IDのデフォルト値は **`cuid()` は現バージョンでパースエラーになる**。`String @id @default(uuid())` を使うこと。
-- 日付のみを表すカラムは `DateTime @db.Date` ではなく、bare型 `Date`（内部的に `pg/date-temporal@1` = `Temporal.PlainDate` にマッピングされる）を使う。
-- 自動更新タイムスタンプは `@updatedAt` ではなく `updatedAt temporal.updatedAtString()`（型コンストラクタ呼び出し）という記法。
+- 日付のみを表すカラムは `DateTime @db.Date` ではなく bare型を使うが、**`Date`（`pg/date-temporal@1` = `Temporal.PlainDate`）は使わない**こと。`@prisma/orm-target-postgres` のコーデックがグローバル`Temporal`を要求し（`typeof Temporal === "undefined"`で例外）、このNodeバージョン（v25）にはまだグローバルTemporalが無いため、実行時に例外になる（`Timestamp`/`Timestamptz`/`Time`のTemporal版も同様）。代わりに文字列版の **`DateString`**（`pg/date-string@1`、値は"YYYY-MM-DD"の生文字列）を使うこと。DDL上のネイティブ型は両者とも同じ`date`なので、既存DBがある場合でも`db update`だけで移行できる（マイグレーション不要）。
+- 自動更新タイムスタンプは `@updatedAt` ではなく `updatedAt temporal.updatedAtString()`（型コンストラクタ呼び出し）という記法。こちらは文字列版なのでTemporal依存なし。
 - クエリは `db.orm.<Model>` のフラット形式ではなく **`db.orm.public.<Model>`**（名前空間つき、`public`は暗黙のデフォルト名前空間）でアクセスする必要があった（このプロジェクトの実行環境で確認済み）。
 - スキーマ変更時のコマンド: `npx prisma contract emit`（成果物再生成）→ 開発中の素早い反映は `npx prisma db update`、正式なマイグレーションは `npx prisma migration plan --name <slug>` → `npx prisma db migrate`。
+  `db migrate` は単体では `db` refを進めない（`migration-model.md`参照）ため、**必ず `npx prisma db migrate --advance-ref db` を使うこと**。ref を進め忘れると、次の `migration plan` が `--from` 無指定時に空DB起点でプランしてしまい、既存テーブルとの重複でエラーになる（このセッションで発生済み。復旧は `migration ref set db <直近migrationのtoハッシュ>`）。
 - ローカルDBはDocker Compose起動が前提（`docker compose up -d db`）。
 
 ## Next.js バージョンに関する注意

@@ -111,7 +111,7 @@
               "stampedOn": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/date-temporal@1",
+                  "codecId": "pg/date-string@1",
                   "kind": "scalar"
                 }
               },
@@ -304,7 +304,7 @@
                   "nullable": false
                 },
                 "stampedOn": {
-                  "codecId": "pg/date-temporal@1",
+                  "codecId": "pg/date-string@1",
                   "nativeType": "date",
                   "nullable": false
                 },
@@ -400,7 +400,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "3f0290b03247bc35889145a68e61650114cc4e0b356b5b269147db7691837c45"
+    "storageHash": "0066724b7c21ba9c7158111f243752ea95d34c5f9994ffe88af7d8c012eba964"
   },
   "execution": {
     "executionHash": "bddc485715f509bc1958b2cb1765fd7d4e538e8c4096d18600537ab54f51f3af",
