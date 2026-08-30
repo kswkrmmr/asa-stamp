@@ -12,10 +12,13 @@ export function RegisterForm() {
   );
 
   return (
-    <form action={formAction} className="mt-6 border-t border-paper-line pt-4">
+    <form action={formAction}>
+      <p className="text-sm text-ink-soft">
+        初めての人はスタンプカードを作ります
+      </p>
       <label
         htmlFor="name"
-        className="block font-heading text-lg text-ink-soft"
+        className="mt-1 block font-heading text-lg text-ink-soft"
       >
         名前を入力してください
       </label>
