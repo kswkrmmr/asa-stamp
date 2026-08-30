@@ -84,3 +84,30 @@ export async function pressStamp(
   revalidatePath(`/u/${userId}`);
   return { status: "success", error: null };
 }
+
+export type RemoveStampState = {
+  status: "idle" | "success" | "error";
+  error: string | null;
+};
+
+// 押し間違えた場合の取り消し。当日分のみ対象（過去日は対象外）。
+export async function removeTodayStamp(
+  userId: string,
+  _prevState: RemoveStampState,
+  _formData: FormData,
+): Promise<RemoveStampState> {
+  const today = getJstTodayString();
+  const existing = await db.orm.public.Stamp.where({
+    userId,
+    stampedOn: today,
+  }).first();
+
+  if (!existing) {
+    return { status: "error", error: "今日のスタンプが見つかりませんでした" };
+  }
+
+  await db.orm.public.Stamp.where({ id: existing.id }).delete();
+
+  revalidatePath(`/u/${userId}`);
+  return { status: "success", error: null };
+}
