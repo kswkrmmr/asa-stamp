@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/prisma/db";
 import { StampButton } from "@/components/StampButton";
 import { StampCalendar } from "@/components/StampCalendar";
+import { addMonths, clampToTodayOrEarlier } from "@/lib/calendarMonth";
 import {
   formatStampWindow,
   getJstTodayString,
@@ -17,15 +18,31 @@ const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "numeric",
 });
 
-export default async function UserPage({ params }: PageProps<"/u/[id]">) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function UserPage({
+  params,
+  searchParams,
+}: PageProps<"/u/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
   const user = await db.orm.public.User.first({ id });
 
   if (!user) {
     notFound();
   }
 
-  const { year, month } = getJstYearMonth();
+  const todayYearMonth = getJstYearMonth();
+  const { year, month } = clampToTodayOrEarlier(
+    {
+      year: Number(firstParam(sp.year)),
+      month: Number(firstParam(sp.month)),
+    },
+    todayYearMonth,
+  );
+
   const pad = (n: number) => n.toString().padStart(2, "0");
   const monthStart = `${year}-${pad(month)}-01`;
   const monthEnd = `${year}-${pad(month)}-${pad(new Date(year, month, 0).getDate())}`;
@@ -43,6 +60,15 @@ export default async function UserPage({ params }: PageProps<"/u/[id]">) {
   const today = getJstTodayString();
   const alreadyStampedToday = stampedDates.has(today);
   const canStampNow = isWithinStampWindowNow(window);
+
+  const prev = addMonths(year, month, -1);
+  const next = addMonths(year, month, 1);
+  const isCurrentMonth =
+    year === todayYearMonth.year && month === todayYearMonth.month;
+  const prevHref = `/u/${id}?year=${prev.year}&month=${prev.month}`;
+  const nextHref = isCurrentMonth
+    ? null
+    : `/u/${id}?year=${next.year}&month=${next.month}`;
 
   return (
     <div>
@@ -68,6 +94,8 @@ export default async function UserPage({ params }: PageProps<"/u/[id]">) {
           month={month}
           stampedDates={stampedDates}
           today={today}
+          prevHref={prevHref}
+          nextHref={nextHref}
         />
       </div>
     </div>
