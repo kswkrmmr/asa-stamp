@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 朝活スタンプカード (asa-stamp)
 
-## Getting Started
+RUNTEQ内で開催されている「朝活」の参加記録を、昔のラジオ体操カードのようにスタンプで残す、遊び心重視のWebアプリです。
 
-First, run the development server:
+AI駆動開発（Claude Codeとの協働）の学習・実践プロジェクトとして開発しています。
+
+## コンセプト
+
+「RUNTEQ版ラジオ体操カード」
+
+- 朝活に参加したら、自分のカードにスタンプを押す
+- 他の参加者のカードも見られて、スタンプを押すこともできる
+- 厳密な出席証明ではなく、コミュニティで楽しむための記録として運用する（性善説）
+- ログイン・アカウント認証は無し。名前を登録するだけで使える
+
+## 主な機能
+
+- 名前を登録してスタンプカードを作成（重複名は登録不可）
+- 参加者一覧からカードを選んで閲覧
+- 当日・管理者が設定した時間帯（初期値 06:00〜09:00, JST）のみスタンプを押せる
+- 1ユーザー・1日につきスタンプは1個まで
+- 押し間違えた場合、当日中なら取り消し可能
+- 月ごとのカレンダー表示（前月・翌月へ移動可、未来の月へは進めない）
+- 管理者ページ（秘密URLでのみアクセス可能）からユーザー削除・スタンプ可能時間帯の変更
+
+## 技術スタック
+
+- [Next.js](https://nextjs.org/) (App Router, TypeScript) + [Tailwind CSS](https://tailwindcss.com/)
+- [Prisma 8 (Prisma Next)](https://www.prisma.io/) + PostgreSQL
+  - ローカル: Docker ComposeのPostgres
+  - 本番: [Vercel](https://vercel.com/) + [Neon](https://neon.tech/) Postgres（Vercel Marketplace経由）
+
+## セットアップ
+
+### 必要なもの
+
+- Node.js
+- Docker（ローカルDB用）
+
+### 手順
 
 ```bash
+npm install
+
+# ローカルDB（Postgres）を起動
+docker compose up -d db
+
+# 環境変数ファイルを用意
+cp .env.example .env
+# .env の ADMIN_SECRET は好きなランダム文字列に変更してください
+
+# DBにスキーマを反映
+npx prisma db init
+
+# 開発サーバーを起動
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) で確認できます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+管理者ページには `/admin/<.envのADMIN_SECRETの値>` からアクセスできます（このURLは他の人に共有しないでください）。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 開発フロー
 
-## Learn More
+機能ごとにブランチを切り、プルリクエストを作成する運用にしています。
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+git checkout -b feature/xxx
+# 実装・コミット
+git push -u origin feature/xxx
+gh pr create
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## デプロイ
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel + Neon Postgres にデプロイしています。GitHubリポジトリと連携済みのため、`main` ブランチへのマージで自動的に本番デプロイされます。
