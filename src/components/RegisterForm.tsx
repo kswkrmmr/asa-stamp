@@ -25,7 +25,7 @@ export function RegisterForm() {
         type="text"
         required
         maxLength={20}
-        placeholder="例：まもる"
+        placeholder="例：らんてくん"
         className="mt-2 w-full rounded border border-paper-line bg-white/70 px-3 py-2 text-ink outline-none focus:border-stamp"
       />
       {state.error && (
