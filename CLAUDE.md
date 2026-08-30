@@ -45,6 +45,8 @@ RUNTEQ内の朝活参加記録を、昔のラジオ体操カードのように�
   - ローカル開発: Docker Compose (`docker-compose.yml`) でPostgres 16をポート**5433**（別プロジェクト`ainote`がローカルの5432を使用中のため）で起動し、本番と同じDBエンジンで開発する。
 - デプロイ先: Vercel（Hobby/無料枠）
 - スタンプ演出: 軽量なReactコンポーネント + CSSアニメーションで実装。重量級ライブラリは使わない。
+  スタンプ画像は `public/stamp.png`（白背景PNG、`src/components/StampMark.tsx`から`next/image`で読み込み、
+  CSSの`mix-blend-mode: multiply`で紙の背景になじませている）。現在は仮画像（RUNTEQの許可が下りたら正式ならんてくんスタンプに差し替え予定）。
 
 ## データモデル方針（実装時の出発点）
 - User: id, name (unique), createdAt
@@ -69,11 +71,15 @@ RUNTEQ内の朝活参加記録を、昔のラジオ体操カードのように�
 - Vercelプロジェクト: `kswkrmmrs-projects/asa-stamp`（`vercel link`済み、`.vercel/`はgitignore対象）
 - DB: Vercel Marketplace経由でNeonを接続（`vercel integration add neon`）。`DATABASE_URL`等はVercel側の環境変数に自動設定済み。
 - 本番DBの初期化は `db init`（履歴のあるmigrationではなく、空DBへ直接contractを適用）で行った。Neonはコネクションプーラー(pgbouncer)を挟むため、
-  マイグレーション系のDDLコマンドは `DATABASE_URL_UNPOOLED`（`.env.local`にVercelが書き出す）を使うこと。
-- `ADMIN_SECRET` はローカル（`.env`）と本番（Vercel環境変数, Production）で別の値を使っている。本番の値はこのセッションでのみ`/tmp/prod-admin-secret.txt`に保存した一時ファイルにあり、恒久的な保管場所ではない。
-- デプロイは手動: `vercel deploy --prod`。GitHubリポジトリとの自動デプロイ連携は`vercel link`時に失敗した（GitHub App側の追加権限が必要そうだが未解決）ため、
-  現状は「PRをマージ→ローカルで`git pull`→`vercel deploy --prod`」の手動フロー。
+  マイグレーション系のDDLコマンドは `DATABASE_URL_UNPOOLED` を使うこと（`vercel env pull`で取得できるが、下記の注意を参照）。
+- `ADMIN_SECRET` はローカル（`.env`）と本番（Vercel環境変数, Production）で別の値を使っている。本番の値はVercelダッシュボード/CLI（`vercel env ls` / `vercel env pull`）で確認できる。このセッションで一時的に`/tmp/prod-admin-secret.txt`に保存したものは恒久的な保管場所ではない。
+- GitHubリポジトリとの連携は完了済み（`vercel git connect`）。**`main`へのマージで自動的に本番デプロイされる**ため、通常は手動`vercel deploy --prod`は不要。
 - Vercel Postgres/Neonの無料枠はアイドル時に自動サスペンドする（[[技術スタック]]参照）。UptimeRobot等での常時起動化はしない方針のまま。
+
+**重要: `.env.local`を作らない・残さないこと。** `vercel env pull` や `vercel integration add` はローカルに `.env.local` を作成するが、
+Next.jsの環境変数読み込み優先順位は `.env.local` > `.env` のため、本番のNeon接続情報（`DATABASE_URL`）で**ローカルの`.env`（Docker Postgres向け）が
+上書きされ、`npm run dev`が気づかないうちに本番DBに接続してしまう**（このセッションで実際に発生し、`AdminSetting`が本番側の空データを見てスタンプボタンが
+意図せず無効化される形で発覚した）。本番の接続文字列が必要な場合は `vercel env pull .env.vercel-prod.local` のように別名で取得し、使い終わったら削除すること。
 
 ## Next.js バージョンに関する注意
 このプロジェクトは Next.js 16 系（React 19）。学習データより新しいため、実装前に `node_modules/next/dist/docs/` 配下の該当ドキュメントを確認すること（AGENTS.md参照）。
