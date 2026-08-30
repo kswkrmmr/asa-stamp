@@ -64,5 +64,16 @@ RUNTEQ内の朝活参加記録を、昔のラジオ体操カードのように�
   `db migrate` は単体では `db` refを進めない（`migration-model.md`参照）ため、**必ず `npx prisma db migrate --advance-ref db` を使うこと**。ref を進め忘れると、次の `migration plan` が `--from` 無指定時に空DB起点でプランしてしまい、既存テーブルとの重複でエラーになる（このセッションで発生済み。復旧は `migration ref set db <直近migrationのtoハッシュ>`）。
 - ローカルDBはDocker Compose起動が前提（`docker compose up -d db`）。
 
+## デプロイ (Vercel)
+- 本番URL: https://asa-stamp.vercel.app
+- Vercelプロジェクト: `kswkrmmrs-projects/asa-stamp`（`vercel link`済み、`.vercel/`はgitignore対象）
+- DB: Vercel Marketplace経由でNeonを接続（`vercel integration add neon`）。`DATABASE_URL`等はVercel側の環境変数に自動設定済み。
+- 本番DBの初期化は `db init`（履歴のあるmigrationではなく、空DBへ直接contractを適用）で行った。Neonはコネクションプーラー(pgbouncer)を挟むため、
+  マイグレーション系のDDLコマンドは `DATABASE_URL_UNPOOLED`（`.env.local`にVercelが書き出す）を使うこと。
+- `ADMIN_SECRET` はローカル（`.env`）と本番（Vercel環境変数, Production）で別の値を使っている。本番の値はこのセッションでのみ`/tmp/prod-admin-secret.txt`に保存した一時ファイルにあり、恒久的な保管場所ではない。
+- デプロイは手動: `vercel deploy --prod`。GitHubリポジトリとの自動デプロイ連携は`vercel link`時に失敗した（GitHub App側の追加権限が必要そうだが未解決）ため、
+  現状は「PRをマージ→ローカルで`git pull`→`vercel deploy --prod`」の手動フロー。
+- Vercel Postgres/Neonの無料枠はアイドル時に自動サスペンドする（[[技術スタック]]参照）。UptimeRobot等での常時起動化はしない方針のまま。
+
 ## Next.js バージョンに関する注意
 このプロジェクトは Next.js 16 系（React 19）。学習データより新しいため、実装前に `node_modules/next/dist/docs/` 配下の該当ドキュメントを確認すること（AGENTS.md参照）。
