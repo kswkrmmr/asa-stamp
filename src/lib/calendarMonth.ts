@@ -26,3 +26,18 @@ export function clampToTodayOrEarlier(
   const parsed = { year: year as number, month: month as number };
   return isAfter(parsed, today) ? today : parsed;
 }
+
+// カレンダーグリッドの日付セル（月曜始まり）。null は空白セル。
+export function buildCalendarCells(year: number, month: number): (number | null)[] {
+  const firstWeekday = new Date(year, month - 1, 1).getDay(); // Sun=0..Sat=6
+  const leadingBlanks = (firstWeekday + 6) % 7; // Mon=0..Sun=6
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const cells: (number | null)[] = [
+    ...Array<null>(leadingBlanks).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return cells;
+}
