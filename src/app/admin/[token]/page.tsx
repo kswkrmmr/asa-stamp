@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { db } from "@/prisma/db";
@@ -59,7 +60,12 @@ export default async function AdminPage({
                 className="flex items-center justify-between rounded border border-paper-line bg-white/60 px-4 py-2"
               >
                 <div>
-                  <p>{user.name}</p>
+                  <Link
+                    href={`/admin/${token}/u/${user.id}`}
+                    className="underline decoration-dotted hover:text-stamp-dark"
+                  >
+                    {user.name}
+                  </Link>
                   <p className="text-xs text-ink-soft">
                     登録日: {dateFormatter.format(new Date(user.createdAt))}
                   </p>

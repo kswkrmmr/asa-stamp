@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/prisma/db";
 import { isValidAdminToken } from "@/lib/adminAuth";
+import { getJstTodayString } from "@/lib/stampWindow";
 
 export type AdminActionState = {
   status: "idle" | "success" | "error";
@@ -23,6 +24,44 @@ export async function deleteUser(
 
   revalidatePath(`/admin/${token}`);
   return { status: "success", error: null };
+}
+
+export type ToggleStampState = {
+  status: "idle" | "success" | "error";
+  error: string | null;
+  stamped: boolean;
+};
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// 管理者による、押し忘れ・誤爆消しの手直し用。一般ユーザー向けの
+// 「当日・時間帯内のみ」の制約は適用しない。過去日のみ許可（未来日は対応不要なため）。
+export async function toggleStamp(
+  token: string,
+  userId: string,
+  date: string,
+): Promise<ToggleStampState> {
+  if (!isValidAdminToken(token)) {
+    return { status: "error", error: "権限がありません", stamped: false };
+  }
+  if (!DATE_PATTERN.test(date) || date > getJstTodayString()) {
+    return { status: "error", error: "日付が不正です", stamped: false };
+  }
+
+  const existing = await db.orm.public.Stamp.where({
+    userId,
+    stampedOn: date,
+  }).first();
+
+  if (existing) {
+    await db.orm.public.Stamp.where({ id: existing.id }).delete();
+  } else {
+    await db.orm.public.Stamp.create({ userId, stampedOn: date });
+  }
+
+  revalidatePath(`/admin/${token}/u/${userId}`);
+  revalidatePath(`/u/${userId}`);
+  return { status: "success", error: null, stamped: !existing };
 }
 
 function isValidHour(n: number): boolean {
