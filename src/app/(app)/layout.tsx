@@ -1,5 +1,7 @@
 import { UserSidebar } from "@/components/UserSidebar";
 
+export const dynamic = "force-dynamic";
+
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col sm:flex-row">
