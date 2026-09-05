@@ -6,6 +6,7 @@ import { isValidAdminToken } from "@/lib/adminAuth";
 import { addMonths, clampToTodayOrEarlier } from "@/lib/calendarMonth";
 import { getJstTodayString, getJstYearMonth } from "@/lib/stampWindow";
 import { AdminStampCalendar } from "@/components/admin/AdminStampCalendar";
+import { RenameUserForm } from "@/components/admin/RenameUserForm";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -68,14 +69,21 @@ export default async function AdminUserStampsPage({
       >
         ＜ 参加者一覧に戻る
       </Link>
-      <h1 className="mt-2 font-heading text-3xl">
-        {user.name} さんのスタンプ修正
-      </h1>
-      <p className="mt-1 text-sm text-ink-soft">
-        押し忘れ・誤って消えてしまった分などの手直し用です。
-      </p>
+      <h1 className="mt-2 font-heading text-3xl">{user.name} さん</h1>
 
-      <div className="mt-6 max-w-sm">
+      <section className="mt-8 max-w-md">
+        <h2 className="font-heading text-2xl">名前の変更</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          誤字の修正や改名に使えます。スタンプはそのまま残ります。
+        </p>
+        <RenameUserForm token={token} userId={userId} currentName={user.name} />
+      </section>
+
+      <section className="mt-10 max-w-sm">
+        <h2 className="font-heading text-2xl">スタンプ修正</h2>
+        <p className="mt-1 mb-3 text-sm text-ink-soft">
+          押し忘れ・誤って消えてしまった分などの手直し用です。
+        </p>
         <AdminStampCalendar
           token={token}
           userId={userId}
@@ -86,7 +94,7 @@ export default async function AdminUserStampsPage({
           prevHref={prevHref}
           nextHref={nextHref}
         />
-      </div>
+      </section>
     </div>
   );
 }
