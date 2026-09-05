@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/prisma/db";
 import { isValidAdminToken } from "@/lib/adminAuth";
+import { isUniqueViolation } from "@/lib/dbError";
+import { validateUserName } from "@/lib/userName";
 import { getJstTodayString } from "@/lib/stampWindow";
 
 export type AdminActionState = {
@@ -23,6 +25,46 @@ export async function deleteUser(
   await db.orm.public.User.where({ id: userId }).delete();
 
   revalidatePath(`/admin/${token}`);
+  return { status: "success", error: null };
+}
+
+// 誤字・改名の手直し用。名前のルール（必須・20文字以内・重複不可）は登録時と同じ。
+export async function renameUser(
+  token: string,
+  userId: string,
+  _prevState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  if (!isValidAdminToken(token)) {
+    return { status: "error", error: "権限がありません" };
+  }
+
+  const validated = validateUserName(formData.get("name"));
+  if (!validated.ok) {
+    return { status: "error", error: validated.error };
+  }
+  const name = validated.name;
+
+  const user = await db.orm.public.User.first({ id: userId });
+  if (!user) {
+    return { status: "error", error: "参加者が見つかりませんでした" };
+  }
+  if (user.name === name) {
+    return { status: "success", error: null };
+  }
+
+  try {
+    await db.orm.public.User.where({ id: userId }).update({ name });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return { status: "error", error: "その名前はすでに登録されています" };
+    }
+    throw err;
+  }
+
+  revalidatePath(`/admin/${token}`);
+  revalidatePath(`/admin/${token}/u/${userId}`);
+  revalidatePath("/", "layout");
   return { status: "success", error: null };
 }
 
